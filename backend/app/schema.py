@@ -8,8 +8,8 @@ class AccountImportRequest(BaseModel):
 class AccountImportItem(BaseModel):
     line: int
     email: str
-    password: str
-    two_fa: str
+    # password: str
+    # two_fa: str
     totp_code: str
 
 

@@ -2,6 +2,10 @@ import os
 
 from cryptography.fernet import Fernet
 
+from app.config import load_config
+
+load_config()
+
 
 def get_fernet() -> Fernet:
     key = os.environ.get("ACCOUNT_MANAGER_MASTER_KEY")
