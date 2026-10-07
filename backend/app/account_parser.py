@@ -1,12 +1,14 @@
-from app.totp import generate_totp
+import re
+
+from app.totp import generate_totp, normalize_totp_secret
+
 
 DELIMITER = "----"
-TWO_FA_PREFIX = "https://2fa.live/tok/"
+RECORD_PREFIX_PATTERN = re.compile(r"^\s*[^:：\r\n]{0,32}?\d+[^:：\r\n]{0,16}[:：]\s*")
 
 
 def parse_account_line(line: str) -> tuple[str, str, str]:
-    line = line.strip()
-
+    line = normalize_account_line(line)
     first = line.find(DELIMITER)
     last = line.rfind(DELIMITER)
 
@@ -31,6 +33,9 @@ def parse_account_content(content: str) -> dict:
         line = line.strip()
 
         if not line:
+            continue
+
+        if not looks_like_account_record(line):
             continue
 
         try:
@@ -60,12 +65,33 @@ def parse_account_content(content: str) -> dict:
 
 
 def parse_two_fa(value: str) -> str:
-    value = value.strip()
+    return normalize_totp_secret(value)
 
-    if value.startswith(TWO_FA_PREFIX):
-        value = value[len(TWO_FA_PREFIX) :]
 
-    if not value:
-        raise ValueError("2FA secrete 不能为空")
+def normalize_account_line(line: str) -> str:
+    line = line.strip()
 
-    return value
+    return RECORD_PREFIX_PATTERN.sub("", line, count=1)
+
+
+def looks_like_account_record(line: str) -> bool:
+    line = normalize_account_line(line)
+
+    first = line.find(DELIMITER)
+    last = line.rfind(DELIMITER)
+
+    # 至少必须有两个 ----
+    if first == -1 or last == -1 or first == last:
+        return False
+
+    two_fa = line[last + len(DELIMITER) :].strip()
+
+    if not two_fa:
+        return False
+
+    # URL 类型的 2FA
+    if two_fa.startswith(("http://", "https://", "otpauth://")):
+        return True
+
+    # 裸 Secret 通常不会短
+    return len(two_fa) >= 16

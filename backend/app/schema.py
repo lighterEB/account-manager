@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class AccountImportRequest(BaseModel):
@@ -21,3 +22,11 @@ class AccountImportError(BaseModel):
 class AccountImportResponse(BaseModel):
     success: list[AccountImportItem]
     errors: list[AccountImportError]
+
+
+class AccountListItem(BaseModel):
+    id: int
+    email: str
+    status: str
+    totp_code: str
+    created_ad: datetime

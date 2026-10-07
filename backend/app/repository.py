@@ -107,3 +107,18 @@ def create_account_with_credential(
     except Exception:
         db.rollback()
         raise
+
+
+def list_account_with_credentials(
+    db: Session,
+) -> list[tuple[Account, AccountCredential]]:
+    stmt = (
+        select(Account, AccountCredential)
+        .join(
+            AccountCredential,
+            AccountCredential.account_id == Account.id,
+        )
+        .order_by(Account.id)
+    )
+
+    return list(db.execute(stmt).tuples())
